@@ -1,0 +1,11 @@
+#!/bin/bash
+#
+# ~/.startdwm
+#
+
+# To restart dwm without logging out or closing applications
+while true; do
+  # Log stderror to a file 
+  dwm 2> ~/.dwm.err > ~/.dwm.log
+done
+

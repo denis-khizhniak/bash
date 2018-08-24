@@ -1,0 +1,15 @@
+#!/bin/bash
+#
+# Show notification when battery is low
+
+BAT=$(acpi -b | awk -F '[,:] ' '{print $3}')
+
+while true; do
+    if (( ${BAT%%%*} <= 15 )); then
+        ((! ${is_bat_notif_raised:-0})) && notify-send "Low Battery!" "Please plugin charger!"
+        is_bat_notif_raised=1
+    else
+        is_bat_notif_raised=0
+    fi
+    sleep 1s
+done

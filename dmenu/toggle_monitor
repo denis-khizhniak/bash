@@ -1,0 +1,56 @@
+#!/bin/bash
+#
+# Use dmenu to toggle external and internal monitors
+
+# Constants
+readonly extend="Extend"
+readonly duplicate="Duplicate"
+readonly left_of="Left of Main"
+readonly right_of="Right of Main"
+readonly above="Above Main"
+readonly below="Below Main"
+
+# Paths
+asounrc_main_path="~/Projects/dotfiles/alsa/asoundrc-main"
+asounrc_hdmi_path="~/Projects/dotfiles/alsa/asoundrc-hdmi"
+
+# Menu
+modes="$extend\n$duplicate"
+ext_mod_opts="$left_of\n$right_of\n$above\n$below"
+
+main_mon="$(xrandr | grep -Eo 'LVDS[[:alnum:]-]* connected' | cut -d' ' -f1)"
+selected="$(xrandr | grep -Eo '[[:alnum:]-]+ connected' | cut -d' ' -f1 | dmenu "$@")"
+hdmi_mon="$(xrandr | grep -Ev "$selected" | grep -Eo '[[:alnum:]-]+ (dis)?connected' | cut -d' ' -f1 | grep -i  'hdmi')"
+
+external_cmd="xrandr --output "$main_mon" --primary --auto --output "$selected" --%s "$main_mon" --auto"
+
+declare -A mod_opts
+mod_opts=( ["$duplicate"]="same-as" \
+           ["$left_of"]="left-of"
+           ["$right_of"]="right-of"
+           ["$above"]="above"
+           ["$below"]="below" )
+
+if [[ "$selected" =~ "LVDS" ]]; then
+  # Sound settings
+  #ln -sf "$asounrc_main_path" ~/.asoundrc
+
+  # Picture settings
+  xrandr --output "$selected" --primary --auto --output "$hdmi_mon" --off
+elif [[ "$selected" =~ "HDMI" ]]; then
+  # Sound settings
+  #ln -sf "$asounrc_hdmi_path" ~/.asounrc_hdmi_path
+    
+  # Picture settings  
+  selected="$(echo -e "$modes" | dmenu "$@")"
+  case "$selected" in
+    "$duplicate") eval "$(printf "$external_cmd" "${mod_opts["$duplicate"]}")"
+    ;;
+    "$extend") 
+      selected="$(echo -e "$ext_mod_opts" | dmenu "$@")"
+      eval "$(printf "$external_cmd" "${mod_opts["$selected"]}")"
+    ;; 
+  esac
+else
+  echo "Not implemented monitor option!"
+fi

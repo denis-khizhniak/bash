@@ -1,0 +1,8 @@
+#!/bin/bash
+#
+# Google Search using dmenu
+#
+
+URL='https://www.google.ru/search?q='
+QUERY=$(echo '' | dmenu -p "Search:" -fn "DejaVuSansMono:size=9")
+[ -n "$QUERY" ] && xdg-open "${URL}${QUERY}" 2> /dev/null

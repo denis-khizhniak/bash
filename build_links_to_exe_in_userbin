@@ -1,0 +1,32 @@
+#!/bin/bash
+#
+# Build links to executable files under the specified directory in the ~/bin directory
+#
+
+# Initialize variables
+bin_dir=~/bin
+dir=""
+maxdepth=""
+hidden=""
+recursive=false
+include_hidden=false
+
+OPTS=$(getopt -o rRh --long recursive,accept-hidden -n 'parse-options' -- "$@")
+
+if [ $? != 0 ] ; then echo "Failed parsing options." >&2 ; exit 1 ; fi
+
+eval set -- "$OPTS"
+
+while true; do
+  case "$1" in
+    -r | -R | --recursive ) recursive=true ; shift ;;
+    -h | --accept-hidden ) include_hidden=true ; shift ;;
+    -- ) [ -d "$2" ] && { dir="$2"; shift 2; break; } || { echo "Invalid directory!"; exit; } ;;
+    * ) break ;;
+  esac
+done
+
+maxdepth="$( (! $recursive) && echo "-maxdepth 1")"
+hidden="$( (! $include_hidden) && echo "-not -path '*/\.*'")"
+cmd="find $dir $maxdepth $hidden -type f -executable"' | xargs -rI {} sh -c '\''ln -svfr {} '${bin_dir}'/$(basename {} | sed -E "s/^\.//")'\'''
+eval $cmd
