@@ -6,4 +6,4 @@ activeWinLine=$(xprop -root | grep "_NET_ACTIVE_WINDOW(WINDOW)")
 activeWinId=${activeWinLine:40}
 import -window "$activeWinId" "$path"
 xclip -selection clipboard -t image/png "$path"
-notify-send "PrintScreen" "Active window snapshoted!"
+notify-send "PrintScreen" "Active window image saved to ${path}"

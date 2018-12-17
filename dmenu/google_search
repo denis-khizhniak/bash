@@ -4,5 +4,5 @@
 #
 
 URL='https://www.google.ru/search?q='
-QUERY=$(echo '' | dmenu -p "Search:" -fn "DejaVuSansMono:size=9")
+QUERY=$(printf %100s | dmenu -p "Search:")
 [ -n "$QUERY" ] && xdg-open "${URL}${QUERY}" 2> /dev/null

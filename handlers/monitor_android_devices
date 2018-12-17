@@ -15,9 +15,8 @@ stdbuf -oL -- udevadm monitor --udev -t android | while read -r -- _ _ event dev
     [ ! -d "$mount_point" ] && mkdir "$mount_point"
     aft-mtp-mount -o allow_other "$mount_point"
     [ ! -z "$mount_point" ] && notify-send "Added device!" "Device $devname is mounted to $mount_point!"
-  elif [ "$event" = remove ] && [ ! -z "$mount_point" ]; then
+elif [ "$event" = remove ] && [ ! -z "$mount_point" ] && [ $(pathtoname "$devpath") = "$devname" ]; then
     notify-send "Removed device!" "Device ${devname:-N/A} is unmounted!"
     fusermount -uz "$mount_point"
-    rm -r "$mount_point"
   fi
 done

@@ -1,0 +1,10 @@
+#!/bin/bash
+#
+# Translate the word by dmenu + trans
+#
+
+selection=$(xclip -selection c -o)
+word=$( printf "$selection%30s" | dmenu -p "Translate:" )
+[[ ! $word ]] && exit # exit if no input from user
+translated_word=$(trans :${@} -brief "$word")
+notify-send -u low "Translation" "En:\n  ${word}\nRu:\n  ${translated_word}"

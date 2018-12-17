@@ -20,7 +20,7 @@ ext_mod_opts="$left_of\n$right_of\n$above\n$below"
 
 main_mon="$(xrandr | grep -Eo 'LVDS[[:alnum:]-]* connected' | cut -d' ' -f1)"
 selected="$(xrandr | grep -Eo '[[:alnum:]-]+ connected' | cut -d' ' -f1 | dmenu "$@")"
-hdmi_mon="$(xrandr | grep -Ev "$selected" | grep -Eo '[[:alnum:]-]+ (dis)?connected' | cut -d' ' -f1 | grep -i  'hdmi')"
+hdmi_mon="$(xrandr | grep -Eo '[[:alnum:]-]+ (dis)?connected' | cut -d' ' -f1 | grep -i  'hdmi')"
 
 external_cmd="xrandr --output "$main_mon" --primary --auto --output "$selected" --%s "$main_mon" --auto"
 
