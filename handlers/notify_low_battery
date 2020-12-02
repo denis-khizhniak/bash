@@ -1,0 +1,16 @@
+#!/bin/bash
+#
+# Show notification when battery is low
+#
+
+
+main() {
+    eval $(acpi -b | awk -F '[,:] ' 'BEGIN {IGNORECASE = 1} {print "charger="$2" battery="int($3)}')
+
+    if (( battery <= 15 )) && [[ $charger == "Discharging" ]]; then
+        notify-send -u critical "Low Battery!" "Please plug in charger!"
+        sleep 15s
+    fi
+}
+
+main "$@"

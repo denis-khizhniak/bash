@@ -1,0 +1,15 @@
+#!/bin/bash
+# 
+# The wrapper for amixer command to notify about the volume and mute status
+# 
+
+main() {
+    amixer "$@"
+
+    delay=1000
+
+    eval $(amixer -M get Master | awk -F"[][]" 'BEGIN {sum=0; c=0} /%/ {sum+=$2; c++} END {($4=="off") ? muted="Yes" : muted="No"; print "volume="sum/c " " "muted="muted }')
+    notify-send -t $delay "Volume" "Current level: $volume\nMuted: $muted"
+}
+
+main "$@"

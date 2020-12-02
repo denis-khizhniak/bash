@@ -1,0 +1,16 @@
+#!/bin/bash
+
+main() {
+    # Remove orphaned packages
+    local orphans=($(yay -Qtdq))
+    if [[ "${orphans[@]}" ]]; then
+        yes | yay -Rs "${orphans[@]}"
+        notify-send -u normal "Deleted orphaned packages" "${orphans[@]}"
+    fi
+
+    # Clean package cache except for the most recent
+    paccache -rk1
+    notify-send -u normal "Package cache cleaned!"
+}
+
+main "$@"

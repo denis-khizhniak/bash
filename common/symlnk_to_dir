@@ -1,0 +1,48 @@
+#!/bin/bash
+#
+# Create symlinks in the current directory to all the files of the specified directory, preserving structure of folders
+#
+# Parameters:
+#     $1 = destination directory
+#     $2 = exceptions folders string, separated by semicolons
+
+is_exceptions_dir() {
+    local dir="$1"
+    local exceptions="$2"
+
+    # check if directory contains exceptions folder and exit with return code "0" if so
+    [[ "$exceptions" =~ "$(basename "$dir")" ]] && return 0
+    
+    local parent_dir="$(dirname "$dir")"
+
+    # dig dipper if we still have parent directories, otherwise exit with return code "1"
+    echo "$parent_dir" | grep -qE '\w+/\w+' && is_exceptions_dir "$exceptions" "$parent_dir" || return 1
+}
+
+dest_files() {
+    find "$dir" -not -path '*.git*' -not -name $(basename "$0") -type f 2>&-
+}
+
+main() {
+    local dir="$1"
+    local exceptions="$2"
+
+    for f in $(dest_files); do
+        local filedir="$(dirname "$f")"
+
+        # skip if you're dealing with one of the exceptions folders
+        is_exceptions_dir "$filedir" "$exceptions" && continue
+
+        # if there is a subdir go there, create a symlink and return back to HOME, otherwise just create a symlink
+        local subdir="${filedir/$dir/}"
+        if [[ "$subdir" ]]; then
+            sudo mkdir -p ${subdir#/} && cd ${subdir#/}
+            sudo ln -svf "$1" .
+            cd "$OLDPWD"
+        else
+            sudo ln -svf "$1" .
+        fi
+    done
+}
+
+main "$@"

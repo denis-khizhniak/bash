@@ -3,23 +3,29 @@
 # List repositories and jump to corresponding directory
 #
 
-declare -A gitdic
-dirlist=()
+main() {
+    declare -A local gitdic
 
-except_dirs=("aur/" ".vim")
+    local dirlist=()
+    local term="urxvt"
 
-for dir in "${except_dirs[@]}"; do 
-    except_dirs_str+=" -not -path *${dir}*"
-done
+    local except_dirs=(".vim")
 
-while IFS= read -d $'\0' -r file ; do
-   dir=$(basename "$(dirname "$file")")
-   gitdic["$dir"]="$(dirname "$file")"
-   dirlist+="$dir\n"
-done < <(find ~ /etc -maxdepth 4 -type d $except_dirs_str -name .git -print0 2>&-)
+    for dir in "${except_dirs[@]}"; do 
+        local except_dirs_str+=" -not -path *${dir}*"
+    done
 
-#Delete last \n from dirlist
-dirlist="${dirlist%'\n'}"
+    while IFS= read -d $'\0' -r file ; do
+        local dir=$(basename "$(dirname "$file")")
+        gitdic["$dir"]="$(dirname "$file")"
+        dirlist+="$dir\n"
+    done < <(find ~ /etc -maxdepth 4 -type d $except_dirs_str -name .git -print0 2>&-)
 
-choice=$(echo -e "$dirlist" | sort | dmenu "$@")
-[ -n "$choice" ] && ( cd "${gitdic["$choice"]}"; st )
+    #Delete last \n from dirlist
+    dirlist="${dirlist%'\n'}"
+
+    local choice=$(echo -e "$dirlist" | sort | dmenu "$@")
+    [ -n "$choice" ] && ( cd "${gitdic["$choice"]}"; $term )
+}
+
+main "$@"

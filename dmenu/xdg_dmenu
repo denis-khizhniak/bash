@@ -1,72 +1,70 @@
 #!/bin/bash
 
-readonly MENU_PATH="/etc/xdg/menus/applications.menu"
-readonly APPS_PATH="/usr/share/applications"
-readonly CTG_PREFIX="+"
+find_apps_by_subctg() {
+    local subctg="$1"
 
-function find_apps_by_subctg()
-{
-  local subctg="$1"
+    find "$APPS_PATH" -type f -name '*.desktop' \
+        | xargs grep -l "$subctg" \
+        | sort -u \
+        | xargs -I {} basename {} .desktop
+    }
 
-  find "$APPS_PATH" -type f -name '*.desktop' \
-    | xargs grep -l "$subctg" \
-    | sort -u \
-    | xargs -I {} basename {} .desktop
-}
+find_apps_by_ctg() {
+    local ctg="$1"
+    export -f find_apps_by_subctg
+    export APPS_PATH
 
-function find_apps_by_ctg()
-{
-  local ctg="$1"
-  export -f find_apps_by_subctg
-  export APPS_PATH
+    echo cat "/Menu/Menu[Name=\"$ctg\"]/descendant::Category/text()" \
+        | xmllint --shell "$MENU_PATH" \
+        | sed '/-\+\|\/ >/d' \
+        | sort -u \
+        | xargs -I {} bash -c 'find_apps_by_subctg {}'
+    }
 
-  echo cat "/Menu/Menu[Name=\"$ctg\"]/descendant::Category/text()" \
-    | xmllint --shell "$MENU_PATH" \
-    | sed '/-\+\|\/ >/d' \
-    | sort -u \
-    | xargs -I {} bash -c 'find_apps_by_subctg {}'
-}
+get_app_exec() {
+    local app_name="$1"
 
-function get_app_exec()
-{
-  local app_name="$1"
-
-  sed -nE '1,/^Exec=/{s/^Exec=//p}' "${APPS_PATH}/${app_name}.desktop" | sed -E 's/%\w+//'
+    sed -nE '1,/^Exec=/{s/^Exec=//p}' "${APPS_PATH}/${app_name}.desktop" | sed -E 's/%\w+//'
 }
 
 # Get all the top level categories from xdg menu file and add "Terminal" category
-function get_ctgs()
-{
-  echo cat '/Menu/Menu[Name!="Applications"]/Name/text()' \
-    | xmllint --shell "$MENU_PATH" \
-    | sed '/-\+\|\/ >/d' | sort -u
-}
+get_ctgs() {
+    echo cat '/Menu/Menu[Name!="Applications"]/Name/text()' \
+        | xmllint --shell "$MENU_PATH" \
+        | sed '/-\+\|\/ >/d' | sort -u
+    }
 
 # Get full applications list and add terminal apps
-function get_app_list()
-{
-  find "$APPS_PATH" -name *.desktop | xargs -I {} basename -s .desktop {}
+get_app_list() {
+    find "$APPS_PATH" -name *.desktop | xargs -I {} basename -s .desktop {}
 }
 
 # Print out all the categories and apps
-function print_ctgs_and_apps()
-{
-  printf "%s\n" "${categories[@]/#/$CTG_PREFIX }" "${apps_lst[@]}"
+print_ctgs_and_apps() {
+    printf "%s\n" "${categories[@]/#/$CTG_PREFIX }" "${apps_lst[@]}"
 }
 
-mapfile -t categories < <(get_ctgs)
-mapfile -t apps_lst < <(get_app_list)
+main() {
+    local MENU_PATH="/etc/xdg/menus/applications.menu"
+    local APPS_PATH="/usr/share/applications"
+    local CTG_PREFIX="+"
 
-# Clean out empty categories
-#for ctg in "${categories[@]}"; do 
-#  [ -z "$(find_apps_by_ctg $ctg)" ] && categories=(${categories[@]/$ctg})
-#done
+    mapfile -t local categories < <(get_ctgs)
+    mapfile -t local apps_lst < <(get_app_list)
 
-# Select app or category
-selected=$("print_ctgs_and_apps" | dmenu "$@")
-[ -z "$selected" ] && exit 1
+    # Clean out empty categories
+    #for ctg in "${categories[@]}"; do 
+    #  [ -z "$(find_apps_by_ctg $ctg)" ] && categories=(${categories[@]/$ctg})
+    #done
 
-selected="$([[ "${categories[@]}" =~ "${selected#$CTG_PREFIX }" ]] && find_apps_by_ctg "${selected#$CTG_PREFIX }" | dmenu "$@" || echo "$selected")"
-[ -z "$selected" ] && exit 1
+    # Select app or category
+    local selected=$("print_ctgs_and_apps" | dmenu "$@")
+    [ -z "$selected" ] && exit 1
 
-get_app_exec "$selected" | ${SHELL:-"/bin/sh"} &
+    selected="$([[ "${categories[@]}" =~ "${selected#$CTG_PREFIX }" ]] && find_apps_by_ctg "${selected#$CTG_PREFIX }" | dmenu "$@" || echo "$selected")"
+    [ -z "$selected" ] && exit 1
+
+    get_app_exec "$selected" | ${SHELL:-"/.bin/sh"} &
+}
+
+main "$@"

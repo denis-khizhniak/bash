@@ -1,7 +1,0 @@
-#!/bin/bash
-
-path=~/Pictures/screenshots/$(date +%F_%H%M%S_%N).png
-
-import "$path"
-xclip -selection clipboard -t image/png "$path"
-notify-send "PrintScreen" "Selected area image saved to ${path}"

@@ -1,0 +1,15 @@
+#!/bin/bash
+
+main() {
+    # The data file contains bits of information delimeted by newlines
+    local data_file=~/.personal-data
+    local encrypted_data_file="${data_file}.gpg"
+
+    # Try to decrypt data file, the result will be in "data_file"
+    local data="$(gpg -d "$encrypted_data_file")"
+
+    local selected="$(echo "$data" | dmenu -i)"
+    echo "$selected" | xclip -sel c
+}
+
+main "$@"

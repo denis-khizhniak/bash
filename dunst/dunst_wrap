@@ -1,0 +1,19 @@
+#!/bin/bash
+
+main() {
+    # get current Xresources colors file name
+    local X_RESOURCE_FILE_NAME=${HOME}/"$( cat .Xresources | grep 'include.*colors' | sed 's/#include\s\+//g;s/"//g' )"
+
+    # compose variables from Xresource colors file and export them to be available here
+    $(cat "$X_RESOURCE_FILE_NAME" | sed -E '/^$/d;/^!/d;s/\s{1,}//g;s/:/=/g;s/\W+(\w+.*)/\1/g;s/^/export /g')
+
+    dunst -lb "${color10:-#222222}" \
+        -nb "${color3:-#285577}" \
+        -cb "${color1:-#900000}" \
+        -lf "${color0:-#888888}" \
+        -nf "${color0:-#ffffff}" \
+        -cf "${color0:-#ffffff}" \
+        -geometry "300x5-10+34"
+}
+
+main "$@"

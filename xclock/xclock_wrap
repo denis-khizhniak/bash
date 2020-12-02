@@ -1,0 +1,11 @@
+#!/bin/bash
+
+main() {
+    # kill previous instances of clock application
+    killall xclock 2>&-
+
+    # run new instance of clock application
+    xclock -d -update 1 -strftime %T &
+}
+
+main "$@"

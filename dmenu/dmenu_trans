@@ -1,10 +1,65 @@
 #!/bin/bash
 #
-# Translate the word by dmenu + trans
+# Translate the text by dmenu & trans
 #
 
-selection=$(xclip -selection c -o)
-word=$( printf "$selection%30s" | dmenu -p "Translate:" )
-[[ ! $word ]] && exit # exit if no input from user
-translated_word=$(trans :${@} -brief "$word")
-notify-send -u low "Translation" "En:\n  ${word}\nRu:\n  ${translated_word}"
+
+play_stream_file() {
+    ffplay -hide_banner -nodisp -autoexit "$1"
+}
+
+main() {
+    local src="$1"
+
+    local languages=(ru en fr de it)
+
+    # save selection
+    local selection=$(xclip -sel c -o)
+
+    # empty selection if it's an image
+    (xclip -sel c -o -t TARGETS | grep image 1>&-) && selection=
+
+    # prompt for translation of selection if exists
+    local phrase=$(printf -- "$selection" | tr "\n" " " | dmenu -p "Translate")
+    [[ "$phrase" ]] || exit 0
+
+    # detemrine source language if required by input parameter
+    if [[ "$src" == "-s" ]]; then
+        local srclang="$(printf '%s\n' "${languages[@]}" | dmenu -p "from ...")"
+        [[ "$srclang" ]] || exit 0
+    fi
+
+    # determine destination language
+    local destlang="$(printf '%s\n' "${languages[@]}" | dmenu -p "... to")"
+    [[ "$destlang" ]] || exit 0
+
+    local translated_audio_stream_file="$(mktemp)"
+
+    # get translation
+    local translation=$(trans ${srclang}:${destlang} \
+        -no-ansi \
+        -download-audio-as "$translated_audio_stream_file" \
+        -show-alternatives no \
+        -show-prompt-message no \
+        -show-original no \
+        -show-translation-phonetics no \
+        "$phrase")
+
+    # save brief translation to clipboard
+    trans ${srclang}:${destlang} -b "$phrase" | xclip -sel c &
+
+    # show translation result via notification and get action
+    local ACTION=$(dunstify \
+        --action="default,Play translation" \
+        -u low \
+        "Translation" "\n${translation}")
+
+    # play translated text
+    case "$ACTION" in
+    "default")
+        play_stream_file "$translated_audio_stream_file"
+        ;;
+    esac
+}
+
+main "$@"
