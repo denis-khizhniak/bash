@@ -2,7 +2,7 @@
 
 main() {
     local username="4denis.kh"
-    local password=""
+    local password="***REMOVED***"
 
     # Mail.ru settings
     local app_id="768196"
