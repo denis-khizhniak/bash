@@ -1,0 +1,12 @@
+#!/bin/bash
+#
+# Run AnyDesk with specified theme
+#
+
+main() {
+    local theme_file=/usr/share/themes/Materia-light/gtk-2.0/gtkrc
+
+    GTK2_RC_FILES="$theme_file" exec /usr/bin/anydesk "$@"
+}
+
+main "$@"

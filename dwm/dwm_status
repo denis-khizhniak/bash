@@ -1,0 +1,102 @@
+#!/bin/bash
+#
+# ~/.dwm-status
+#
+
+join_by() {
+    local spt="$1"
+    shift
+    res=$(printf "$spt%s" "$@")
+    echo ${res:${#spt}}
+}
+
+print_temp() { echo -e "${THERMOMETER_ICON} "$(($(cat /sys/class/thermal/thermal_zone0/temp)/1000))C"" ; }
+
+print_date() { echo -e "${CALENDAR_ICON} "$(date '+%d.%m.%Y')"" ; }
+
+print_time() { echo -e "${CLOCK_ICON} "$(date '+%R')"" ; }
+
+print_ram() {
+    local ram=( $(free -m | awk 'NR==2 {print $2" "$2-$4}') )
+    local used_ram=${ram[1]}
+    local total_ram=${ram[0]}
+
+    echo -e "${DB_ICON} "$(perl -e "printf(\"%.f%\", $used_ram / $total_ram * 100)")""
+}
+
+print_swap() { cat /proc/swaps | awk '{if (NR>1) print $4/$3*100"%"}' ; }
+
+print_uptime() { uptime | sed 's/.*: //; s/,//g' ; }
+
+print_cpu() { 
+    local cpu="$(top -bn 2 -d 0.1 | grep '^%Cpu' | tail -n 1 | gawk '{print $2+$4+$6}')"
+    echo -e "${CHIP_ICON} ${cpu}%" 
+}
+
+print_volume() { amixer -M get Master | tail -1 | sed 's/.*\[\([0-9]*%\)\].*/\1/' ; }
+
+print_battery() {
+    local battery="$(acpi -b | awk -F '[,:] ' '{if ($2=="Charging") print $3" (+)"; else if ($2=="Discharging") print $3" (-)"; else print $3}')"
+    local unicode
+
+    if (( ${battery%\%} == 0 )); then
+        unicode="$EMPTY_BATTERY_ICON"
+    elif (( ${battery%\%} <= 50 )); then
+        unicode="$HALF_BATTERY_ICON"
+    elif (( ${battery%\%} <= 100 )); then
+        unicode="$FULL_BATTERY_ICON"
+    fi
+    echo -e "${unicode} ${battery}"
+}
+
+print_kb_layout() {
+    local layout=$( (( ( 16#$(xset q | grep LED | awk '{print $10}') & 16#1000 ) == 16#1000 )) && echo RU || echo EN )
+    echo -e "${KEYBOARD_ICON} $layout"
+}
+
+print_weather() {
+    local city=${1:-St. Petersburg}
+
+    result=$(curl --silent https://query.yahooapis.com/v1/public/yql \
+        -d q="select item.condition from weather.forecast where woeid in (select woeid from geo.places(1) where text=\"$city\") and u='c'" \
+        -d format=json | python -m json.tool)
+
+    if [[ ! $(echo "$result" | grep text) ]]; then
+        echo "Sorry the request to yahoo api failed"
+        exit 1
+    fi
+
+    sky=$(echo "$result" | grep text | cut -d '"' -f4 )
+    temperature=$(echo "$result" | grep temp | cut -d '"' -f4 )
+
+    echo "${sky},${temperature}C"
+}
+
+print_song() {
+    local result="$(ncmpcpp --current-song="{%f}|{%a} (%l)")"
+    [ ! -z "$result" ] && echo -e "${HEADPHONES_ICON} $result"
+}
+
+main() {
+    local separator=" | "
+    local interface="wlp3s0"
+
+    # Icons
+    local THERMOMETER_ICON="\uf491"
+    local CALENDAR_ICON="\uf073"
+    local CLOCK_ICON="\uf017"
+    local DB_ICON="\uf1c0"
+    local CHIP_ICON="\uf2db"
+    local EMPTY_BATTERY_ICON="\uf244"
+    local HALF_BATTERY_ICON="\uf242"
+    local FULL_BATTERY_ICON="\uf240"
+    local KEYBOARD_ICON="\uf11c"
+    local HEADPHONES_ICON="\uf025"
+
+    # Array with info elements
+    local info_elements=( "$(print_cpu)" "$(print_ram)" "$(print_kb_layout)" "$(print_battery)" "$(print_date)" "$(print_time)" )
+
+    xsetroot -name "$(join_by "$separator" "${info_elements[@]}")"
+}
+
+main "$@"

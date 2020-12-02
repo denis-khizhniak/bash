@@ -1,0 +1,16 @@
+#!/bin/bash
+#
+# Wrapper for dbext MSSQL profiles
+#
+
+main() {
+    # osql/tsql in freetds don't seem to accept a file flag; replace -d option with -D for database name
+    local options="$( echo "$@" | sed 's/ -i.*//;s/-d/-D/' )"
+
+    # supress header
+    local options="${options} -o q"
+    local sql_scratch="$( echo "$@" | sed 's/^.* -i //' )"
+    cat "$sql_scratch" | tsql $options | column -t -s $'\t' -o ' | '
+}
+
+main "$@"

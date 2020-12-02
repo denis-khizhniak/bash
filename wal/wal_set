@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+
+
+reload_dunst() {
+    dunst-wrap
+}
+
+reload_qute() {
+  /home/micah/qutebrowser/.venv/bin/python3 /home/micah/.config/Scripts/qutebrowser_reload.py
+}
+
+reload_jetbrains() {
+  /home/micah/intellijPywal/intellijPywalGen.sh /home/micah/.DataGrip2018.1/config
+}
+
+main() {
+    # Source generated colors.
+    . "${HOME}/.cache/wal/colors.sh"
+
+    reload_dunst
+    reload_qute
+    reload_jetbrains
+}
+
+main "$@"

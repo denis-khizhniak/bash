@@ -1,0 +1,29 @@
+#!/bin/bash
+
+main() {
+    local username="4denis.kh"
+    local password="***REMOVED***"
+
+    # Mail.ru settings
+    local app_id="768196"
+    local uid="16774645513655802803"
+    local secret_key="ee96fb0272da4f272e62e1fc3a19b8e0"
+
+    local email_cnt_entity="fullcount"
+
+    # Set XML line separation by "<" and field separation by ">"
+    read_dom () {
+        local IFS=\>
+        read -d \< ENTITY CONTENT
+    }
+
+    # Read XML with read_dom and search for fullcounts entity
+    while read_dom; do
+        if [[ $ENTITY = "$email_cnt_entity" ]]; then
+            echo $CONTENT
+            exit
+        fi
+    done < <( curl -u ${username}:${password} --silent https://mail.google.com/mail/feed/atom )
+}
+
+main "$@"

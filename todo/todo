@@ -1,0 +1,72 @@
+#!/bin/bash
+#
+# Simple TODO tool
+#
+
+TODO=~/.todos
+
+list_todos () {
+    awk '{print NR")", $0}' "$TODO" | less
+}
+
+clear_todos () {
+    >"$TODO"
+}
+
+show_help () {
+    cat <<EOF
+<none>       --  List todos
+  -c         --  Clear all todos
+  -d  [N]    --  Do todo [with number N]
+  -e  [N]    --  Edit todo [with number N]
+EOF
+}
+
+do_todo () {
+    if (("${#1}")); then
+        local number=$1
+    else
+        todo
+        read -p "Type a number to do: " number
+    fi
+    echo "Done item: $(sed -n "${number}p" "$TODO")"
+    sed -i "${number}d" "$TODO"
+}
+
+add_todo () {
+    echo "Added item: \"${1}\""
+    echo "${1}" >> "$TODO"
+}
+
+edit_todo () {
+    if (("${#1}")); then
+        local number=$1
+    else
+        todo
+        read -p "Type a number to edit: " number
+    fi
+
+    local todo_line="$(sed -n "${number}p" "$TODO")"
+    read -ei "$todo_line" -p "Edit: " edited_todo_line
+    sed -i "${number}s/${todo_line//\//\\/}/${edited_todo_line//\//\\/}/" "$TODO"
+}
+
+main () {
+    [[ ! -f "$TODO" ]] && touch "$TODO"
+
+    if ! (($#)); then
+        list_todos
+    elif [[ "$1" == "-c" ]]; then
+        clear_todos
+    elif [[ "$1" == "-d" ]]; then
+        do_todo "$2"
+    elif [[ "$1" == "-h" ]]; then
+        show_help
+    elif [[ "$1" == "-e" ]]; then
+        edit_todo "$2"
+    else
+        add_todo "$*"
+    fi
+}
+
+main "$@"

@@ -1,0 +1,36 @@
+#!/bin/sh
+
+abspath () {
+    case "$1" in
+	/*) printf "%s\n" "$1";;
+	*)  printf "%s\n" "$PWD/$1";;
+    esac
+}
+
+listfiles () {
+    find -L "$(dirname "$target")" -maxdepth 1 -type f -iregex \
+    '.*\(jpe?g\|bmp\|png\|gif\)$' -print0 | sort -z
+}
+
+main() {
+    if [ $# -eq 0 ]; then
+	echo "Usage: ${0##*/} PICTURES"
+	exit
+    fi
+
+    [ "$1" = '--' ] && shift
+
+    local target="$(abspath "$1")"
+    local count="$(listfiles | grep -m 1 -ZznF "$target" | cut -d: -f1)"
+
+    echo target=$target
+    echo count=$count
+
+    if [ -n "$count" ]; then
+	listfiles | xargs -0 /usr/bin/sxiv -n "$count" --
+    else
+	/usr/bin/sxiv -- "$@" # fallback
+    fi
+}
+
+main "$@"

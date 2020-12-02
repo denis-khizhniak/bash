@@ -1,0 +1,28 @@
+#!/bin/bash
+#
+# Check for available updates for packages
+
+get_regular_upgrades_cnt() {
+    yay -Syq 2>&- 1>&- && yay -Qu 2>&- | wc -l
+}
+
+get_pacaur_upgrades_cnt() {
+    yay -Syqa 2>&- 1>&- && yay -Qua 2>&- | wc -l
+}
+
+OPTS=$(getopt -o a -l aur -n 'parse-options' -- "$@")
+
+main() {
+if [ $? != 0 ]; then
+    echo "Failed parsing options." >&2
+    exit 1
+fi
+eval set -- "$OPTS"
+
+case "$1" in
+    -a | --aur) get_pacaur_upgrades_cnt ;;
+    --) get_regular_upgrades_cnt ;;
+esac
+}
+
+main "$@"

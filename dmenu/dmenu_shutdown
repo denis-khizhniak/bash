@@ -3,20 +3,24 @@
 # Show shutdown menu via dmenu
 # 
 
-actions=("reboot\nshutdown\nsleep\nhibernate")
-action=$(echo -e $actions | dmenu "$@")
-case "$action" in
-  reboot)
-    sudo systemctl reboot
-    ;;
-  shutdown)
-    sudo systemctl poweroff
+main() {
+    local actions=("reboot\nshutdown\nsleep\nhibernate")
+    local action=$(echo -e $actions | dmenu "$@")
+    case "$action" in
+    reboot)
+        sudo systemctl reboot
+        ;;
+    shutdown)
+        sudo systemctl poweroff
 
-    ;;
-  sleep)
-    sudo systemctl suspend
-    ;;
-  hibernate)
-    sudo systemctl hibernate
-    ;;
-esac
+        ;;
+    sleep)
+        sudo systemctl suspend
+        ;;
+    hibernate)
+        sudo systemctl hibernate
+        ;;
+    esac
+}
+
+main "$@"

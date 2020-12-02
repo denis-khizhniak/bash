@@ -1,0 +1,18 @@
+#!/bin/sh  
+#
+# Automatically setup HDMI monitor
+
+main() {
+    local xrandr_cmd="/usr/bin/xrandr"
+    local grep_cmd="/usr/bin/grep"
+
+    read -r hdmi status < <(DISPLAY=:0 $xrandr_cmd | $grep_cmd -Po 'HDMI.*(dis)?connected')
+
+    if [[ $status -eq 'connected' ]]; then
+        DISPLAY=:0 $xrandr_cmd --output $hdmi --auto --above LVDS1 
+    else
+        DISPLAY=:0 $xrandr_cmd --output $hdmi --off
+    fi
+}
+
+main "$@"

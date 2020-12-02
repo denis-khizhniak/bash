@@ -3,6 +3,13 @@
 # Google Search using dmenu
 #
 
-URL='https://www.google.ru/search?q='
-QUERY=$(printf %100s | dmenu -p "Search:")
-[ -n "$QUERY" ] && xdg-open "${URL}${QUERY}" 2> /dev/null
+main() {
+    local url='https://www.google.ru/search?q='
+
+    local selection=$(xclip -selection c -o)
+    (xclip -selection c -o -t TARGETS | grep image 1>&-) && selection=
+    local query=$( printf "$selection" | dmenu -p "Search" )
+    [ -n "$query" ] && xdg-open "${url}${query}" 2> /dev/null
+}
+
+main "$@"

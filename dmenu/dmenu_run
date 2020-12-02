@@ -1,13 +1,18 @@
 #!/bin/sh
 #
 # Run terminal applications within terminal, others - in standard manner
-readonly APPS_PATH=/usr/share/applications
 
-readonly TERM_APPS=~/.dmenu_term_apps
-readonly ADDTL_APPS=~/.dmenu_addtl_apps  # applications which don't have .desktop files associated
+main() {
+    local APPS_PATH=/usr/share/applications
 
-filter_apps=( $(IFS=$'\n'; for f in "$APPS_PATH/*.desktop"; do echo $f; done | xargs grep -Phom 1 '(?<=Exec=)[/A-Za-z0-9-]+' | sort -u | rev | cut -d'/' -f1 | rev) )
+    local TERM_APPS=~/.dmenu_term_apps
+    local ADDTL_APPS=~/.dmenu_addtl_apps  # applications which don't have .desktop files associated
 
-app=$( dmenu_path | grep -Ew $(IFS='|'; echo "${filter_apps[*]}") | dmenu "$@" )
+    local filter_apps=( $(IFS=$'\n'; for f in "$APPS_PATH/*.desktop"; do echo $f; done | xargs grep -Phom 1 '(?<=Exec=)[/A-Za-z0-9-]+' | sort -u | rev | cut -d'/' -f1 | rev) )
 
-echo "$app" | grep -f "$term_apps" && st -e "$app" || echo "$app" | ${SHELL:-"/bin/sh"} &
+    local app=$( dmenu_path | grep -Ew $(IFS='|'; echo "${filter_apps[*]}") | dmenu "$@" )
+
+    echo "$app" | grep -f "$term_apps" && st -e "$app" || echo "$app" | ${SHELL:-"/.bin/sh"} &
+}
+
+main "$@"
