@@ -9,7 +9,7 @@ find_execs() {
     local recursive_str="$2"
     local hidden_str="$3"
 
-    stdbuf -oL find "$(cd "$path"; pwd)" $recursive_str $hidden_str \( -type f -or -type l \) -executable
+    stdbuf -oL find "$(cd "$path"; pwd)" $recursive_str $hidden_str -not -path '*.git*' \( -type f -or -type l \) -executable
 }
 
 main() {

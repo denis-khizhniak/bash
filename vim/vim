@@ -1,3 +1,0 @@
-#!/bin/bash
-
-[ -z "$TMUX" ] && tmux new-session "/usr/bin/vim "$@"" || tmux new-window "/usr/bin/vim "$@""
