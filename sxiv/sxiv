@@ -1,13 +1,31 @@
 #!/bin/sh
 
+# Launch in thumbnail mode if and only if the first argument is a directory
+# Otherwise open every supported image file in the directory of the first argument (file)
+
+assoc_filetypes(){
+    grep sxiv ${HOME}/.local/share/applications/mimeinfo.cache ; grep sxiv /usr/share/applications/mimeinfo.cache | \
+        cut -f1 -d= | cut -f2 -d/ | grep -E '^\w+$'
+}
+
+filter_exts_str() {
+    exts_str="$(assoc_filetypes | xargs -i printf " -name '*.{}' -o")"
+    echo "${exts_str%-o}"
+}
+
+
 if command -v sxiv >/dev/null 2>&1; then
-    if [ -d "${@: -1}" ] || [ -h "${@: -1}" ]; then
-        /usr/bin/sxiv -t "$@"
+    if [ -d "${1: -1}" ] || [ -h "${1: -1}" ]; then
+	/usr/bin/sxiv -t "$@"
     else
-        /usr/bin/sxiv "$@"
+	dirpath="$(dirname "$(realpath "$1")")"
+        # echo $dirpath
+        image_files=("$(eval find "$dirpath" -type f $(filter_exts_str))")
+
+	/usr/bin/sxiv    ${image_files[@]}
     fi
 elif command -v feh >/dev/null 2>&1; then
-    feh "$@"
+    /usr/bin/feh "$@"
 else
     echo "Please install SXIV or FEH!"
 fi
